@@ -143,6 +143,48 @@ describe('Controller', function () {
     });
   });
 
+  describe('A Controller instance without baseURL using ORIGINAL_PATH_HEADER', function () {
+    var controller, client;
+    before(function () {
+      controller = new Controller();
+      sinon.spy(controller, '_handleRequest');
+      client = request.agent(new DummyServer(controller));
+    });
+
+    describe('receiving a request', function () {
+      before(function (done) {
+        process.env.ORIGINAL_PATH_HEADER = 'Original-Path';
+        client
+          .get('/path?a=b')
+          .set('Original-Path', '/foo')
+          .end(done);
+      });
+
+      it('should call _handleRequest with request, response and next', function () {
+        controller._handleRequest.should.have.been.calledOnce;
+        var args = controller._handleRequest.getCall(0).args;
+        args[0].should.have.property('url');
+        args[1].should.be.an.instanceof(http.ServerResponse);
+        args[2].should.be.an.instanceof(Function);
+      });
+
+      it('should extend _handleRequest with the original URL as parsedUrl property', function () {
+        controller._handleRequest.should.have.been.calledOnce;
+        var request = controller._handleRequest.getCall(0).args[0];
+        request.should.have.property('parsedUrl');
+        request.originalUrl.should.deep.equal({
+          protocol: 'http:', host: request.headers.host, hostname: undefined, port: undefined,
+          path: '/foo?a=b', pathname: '/foo', href: undefined, auth: undefined,
+          query: { a: 'b' }, search: undefined, hash: undefined, slashes: undefined,
+        });
+      });
+
+      it('should hand over to the next controller', function () {
+        controller.next.should.have.been.calledOnce;
+      });
+    });
+  });
+
   describe('A Controller instance with baseURL', function () {
     var controller, client;
     before(function () {

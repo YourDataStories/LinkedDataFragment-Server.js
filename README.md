@@ -177,6 +177,12 @@ If you decide to let a proxy handle HTTPS, use this configuration to run the ser
        "baseURL": "https://data.example.org/",
      }  
 
+### Addition to the original service
+
+You can export the environment variable `ORIGINAL_PATH_HEADER` before starting
+the server. The value provided will be looked up in the headers and the value
+of the header will replace the path normally used to generate the URL when
+consulting the service.
 
 ### _(Optional)_ Running in a Docker container
 
